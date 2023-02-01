@@ -1,6 +1,6 @@
 #include "includes.h"
 
-std::string BOT_TOKEN = "ODI3NjI4MjU2MjI3NDkxODgy.GTisPv.4SuhHRiNDXOCXS_XglqnQT2mqO6wdaHQqmuDmA";
+std::string BOT_TOKEN = "xyz";
 const uint64_t intents = dpp::i_default_intents | dpp::i_message_content;
 
 int main()
