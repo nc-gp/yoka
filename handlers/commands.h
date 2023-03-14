@@ -6,7 +6,7 @@ struct cmd {
 	std::string description;
 	cmdHandler handler;
 	std::vector<dpp::command_option> parameters = {};
-	dpp::permissions permissions = 0;
+	dpp::permissions permissions;
 };
 
 namespace Yoka
