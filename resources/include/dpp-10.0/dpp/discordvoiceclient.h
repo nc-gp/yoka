@@ -32,7 +32,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <dpp/nlohmann/json_fwd.hpp>
+#include <dpp/json_fwd.h>
 #include <dpp/wsclient.h>
 #include <dpp/dispatcher.h>
 #include <dpp/cluster.h>
@@ -83,6 +83,11 @@ struct DPP_EXPORT voice_out_packet {
  */
 class DPP_EXPORT discord_voice_client : public websocket_client
 {
+	/**
+	 * @brief Clean up resources
+	 */
+	void cleanup();
+
 	/**
 	 * @brief Mutex for outbound packet stream
 	 */

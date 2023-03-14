@@ -78,10 +78,8 @@ enum guild_flags : uint32_t {
 	g_partnered =				0b00000000000000000000000010000000,
 	/** Community features enabled */
 	g_community =				0b00000000000000000000000100000000,
-	/** Guild has commerce features enabled
-	 * @deprecated Removed by Discord
-	 */
-	g_commerce =				0b00000000000000000000001000000000,
+	/** Guild has enabled role subscriptions */
+	g_role_subscription_enabled = 	0b00000000000000000000001000000000,
 	/** Guild has access to create announcement channels */
 	g_news =				0b00000000000000000000010000000000,
 	/** Guild is discoverable in discovery */
@@ -114,19 +112,23 @@ enum guild_flags : uint32_t {
 	g_monetization_enabled =		0b00000001000000000000000000000000,
 	/** guild has increased custom sticker slots */
 	g_more_stickers =			0b00000010000000000000000000000000,
-	/** guild has access to create private threads
-	 * @deprecated Removed by Discord
-	 * */
-	g_private_threads =			0b00000100000000000000000000000000,
+	/** Guild has enabled the role subscription promo page */
+	g_creator_store_page_enabled =	0b00000100000000000000000000000000,
 	/** guild is able to set role icons */
 	g_role_icons =				0b00001000000000000000000000000000,
-	/** guild has access to the seven day archive time for threads */
+	/** guild has access to the seven day archive time for threads
+	 * @deprecated Removed by Discord
+	 */
 	g_seven_day_thread_archive =		0b00010000000000000000000000000000,
-	/** guild has access to the three day archive time for threads */
+	/** guild has access to the three day archive time for threads
+	 * @deprecated Removed by Discord
+	 */
 	g_three_day_thread_archive =		0b00100000000000000000000000000000,
 	/** guild has enabled ticketed events */
 	g_ticketed_events =			0b01000000000000000000000000000000,
-	/** guild can have channel banners */
+	/** guild can have channel banners
+	 * @deprecated Removed by Discord
+	 */
 	g_channel_banners =			0b10000000000000000000000000000000,
 };
 
@@ -144,6 +146,12 @@ enum guild_flags_extra : uint8_t {
 	g_invites_disabled =		0b00001000,
 	/** Guild has been set as support server of an app in the App Directory */
 	g_developer_support_server =	0b00010000,
+	/** Guild role subscription purchase and renewal notifications are off */
+	g_no_role_subscription_notifications = 0b00100000,
+	/** Guild role subscription sticker reply buttons are off */
+	g_no_role_subscription_notification_replies = 0b01000000,
+	/** Guild has role subscriptions that can be purchased */
+	g_role_subscriptions_available_for_purchase = 0b10000000,
 };
 
 /**
@@ -248,14 +256,19 @@ public:
 	bool has_animated_guild_avatar() const;
 
 	/**
-	 * @brief Returns the members per guild avatar if they have one, otherwise returns an empty string
+	 * @brief Returns the member's per guild avatar url if they have one, otherwise returns an empty string.
 	 *
-	 * @note per-server avatar is a nitro only feature so it might be not set. If you need the real user avatar, use user::get_avatar_url.
+	 * @note per-server avatar is a nitro only feature so it might be not set. If you need the user avatar, use user::get_avatar_url.
 	 * 
-	 * @param size The size of the avatar in pixels. It can be any power of two between 16 and 4096. If not specified, the default sized avatar is returned.
-	 * @return std::string avatar url or empty string
+	 * @param size The size of the avatar in pixels. It can be any power of two between 16 and 4096,
+	 * otherwise the default sized avatar is returned.
+	 * @param format The format to use for the avatar. It can be one of `i_webp`, `i_jpg`, `i_png` or `i_gif`.
+	 * Passing `i_gif` might result in an invalid url for non-animated images. Consider using the `prefer_animated` parameter instead.
+	 * @param prefer_animated Whether you prefer gif format.
+	 * If true, it'll return gif format whenever the image is available as animated.
+	 * @return std::string avatar url or an empty string, if required attributes are missing or an invalid format was passed
 	 */
-	std::string get_avatar_url(uint16_t size = 0) const;
+	std::string get_avatar_url(uint16_t size = 0, const image_type format = i_png, bool prefer_animated = true) const;
 
 	/**
 	 * @brief Set the nickname 
@@ -272,7 +285,15 @@ public:
 	 *
 	 * 
 	 */
-	dpp::user* get_user() const;
+	user* get_user() const;
+	
+	/**
+	 * @brief Check if this member is equal to another member object.
+	 * @param other_member other member object to compare
+	 * @return true if their user ids are equal, false otherwise.
+	 */
+	
+	bool operator == (guild_member const& other_member) const;
 
 	/**
 	 * @brief Set whether the user is muted in voice channels
@@ -673,34 +694,48 @@ public:
 	/**
 	 * @brief Get the banner url of the guild if it have one, otherwise returns an empty string
 	 *
-	 * @param size The size of the banner in pixels. It can be any power of two between 16 and 4096. if not specified, the default sized banner is returned.
-	 * @return std::string banner url or empty string
+	 * @param size The size of the banner in pixels. It can be any power of two between 16 and 4096,
+	 * otherwise the default sized banner is returned.
+	 * @param format The format to use for the avatar. It can be one of `i_webp`, `i_jpg`, `i_png` or `i_gif`.
+	 * Passing `i_gif` might result in an invalid url for non-animated images. Consider using the `prefer_animated` parameter instead.
+	 * @param prefer_animated Whether you prefer gif format.
+	 * If true, it'll return gif format whenever the image is available as animated.
+	 * @return std::string banner url or an empty string, if required attributes are missing or an invalid format was passed
 	 */
-	std::string get_banner_url(uint16_t size = 0) const;
+	std::string get_banner_url(uint16_t size = 0, const image_type format = i_png, bool prefer_animated = true) const;
 
 	/**
 	 * @brief Get the discovery splash url of the guild if it have one, otherwise returns an empty string
 	 *
-	 * @param size The size of the discovery splash in pixels. It can be any power of two between 16 and 4096. if not specified, the default sized discovery splash is returned.
-	 * @return std::string discovery splash url or empty string
+	 * @param size The size of the discovery splash in pixels. It can be any power of two between 16 and 4096,
+	 * otherwise the default sized discovery splash is returned.
+	 * @param format The format to use for the avatar. It can be one of `i_webp`, `i_jpg` or `i_png`.
+	 * @return std::string discovery splash url or an empty string, if required attributes are missing or an invalid format was passed
 	 */
-	std::string get_discovery_splash_url(uint16_t size = 0) const;
+	std::string get_discovery_splash_url(uint16_t size = 0, const image_type format = i_png) const;
 
 	/**
 	 * @brief Get the icon url of the guild if it have one, otherwise returns an empty string
 	 *
-	 * @param size The size of the icon in pixels. It can be any power of two between 16 and 4096. if not specified, the default sized icon is returned.
-	 * @return std::string icon url or empty string
+	 * @param size The size of the icon in pixels. It can be any power of two between 16 and 4096,
+	 * otherwise the default sized icon is returned.
+	 * @param format The format to use for the avatar. It can be one of `i_webp`, `i_jpg`, `i_png` or `i_gif`.
+	 * Passing `i_gif` might result in an invalid url for non-animated images. Consider using the `prefer_animated` parameter instead.
+	 * @param prefer_animated Whether you prefer gif format.
+	 * If true, it'll return gif format whenever the image is available as animated.
+	 * @return std::string icon url or an empty string, if required attributes are missing or an invalid format was passed
 	 */
-	std::string get_icon_url(uint16_t size = 0) const;
+	std::string get_icon_url(uint16_t size = 0, const image_type format = i_png, bool prefer_animated = true) const;
 
 	/**
 	 * @brief Get the splash url of the guild if it have one, otherwise returns an empty string
 	 *
-	 * @param size The size of the splash in pixels. It can be any power of two between 16 and 4096. if not specified, the default sized splash is returned.
-	 * @return std::string splash url or empty string
+	 * @param size The size of the splash in pixels. It can be any power of two between 16 and 4096,
+	 * otherwise the default sized splash is returned.
+	 * @param format The format to use for the avatar. It can be one of `i_webp`, `i_jpg` or `i_png`.
+	 * @return std::string splash url or an empty string, if required attributes are missing or an invalid format was passed
 	 */
-	std::string get_splash_url(uint16_t size = 0) const;
+	std::string get_splash_url(uint16_t size = 0, const image_type format = i_png) const;
 
 	/**
 	 * @brief Set the name of the guild in the object
@@ -766,11 +801,10 @@ public:
 	bool is_community() const;
 
 	/**
-	 * @brief Guild has access to use commerce features
-	 * @return bool has commerce features enabled
-	 * @deprecated Removed by Discord
+	 * @brief Has enabled role subscriptions
+	 * @return bool has enabled role subscriptions
 	 */
-	bool has_commerce() const;
+	bool has_role_subscriptions() const;
 
 	/**
 	 * @brief Guild has access to create announcement channels
@@ -807,6 +841,12 @@ public:
 	 * @return bool has been set as a support server of an app in the app directory
 	 */
 	bool has_support_server() const;
+
+	/**
+	 * @brief Guild has role subscriptions that can be purchased
+	 * @return bool has role subscriptions that can be purchased
+	 */
+	bool has_role_subscriptions_available_for_purchase() const;
 
 	/**
 	 * @brief Guild has access to set an animated guild icon
@@ -864,11 +904,10 @@ public:
 	bool has_more_stickers() const;
 
 	/**
-	 * @brief guild has access to create private threads
-	 * @return bool has private threads
-	 * @deprecated Removed by Discord
+	 * @brief guild has enabled the role subscription promo page
+	 * @return bool has role subscription promo page enabled
 	 */
-	bool has_private_threads() const;
+	bool has_creator_store_page() const;
 
 	/**
 	 * @brief guild is able to set role icons
@@ -879,12 +918,14 @@ public:
 	/**
 	 * @brief guild has access to the seven day archive time for threads 
 	 * @return bool has seven day thread archive
+	 * @deprecated Removed by Discord
 	 */
 	bool has_seven_day_thread_archive() const;
 
 	/**
 	 * @brief guild has access to the three day archive time for threads
 	 * @return bool has three day thread archive
+	 * @deprecated Removed by Discord
 	 */
 	bool has_three_day_thread_archive() const;
 
@@ -897,6 +938,7 @@ public:
 	/**
 	 * @brief guild has access to channel banners feature
 	 * @return bool has channel banners
+	 * @deprecated Removed by Discord
 	 */
 	bool has_channel_banners() const;
 

@@ -27,7 +27,7 @@
 #include <dpp/guild.h>
 #include <optional>
 #include <variant>
-#include <dpp/nlohmann/json_fwd.hpp>
+#include <dpp/json_fwd.h>
 #include <dpp/json_interface.h>
 
 namespace dpp {
@@ -832,7 +832,8 @@ enum sticker_type : uint8_t {
 enum sticker_format : uint8_t {
 	sf_png = 1,
 	sf_apng = 2,
-	sf_lottie = 3
+	sf_lottie = 3,
+	sf_gif = 4,
 };
 
 /**
@@ -894,12 +895,11 @@ struct DPP_EXPORT sticker : public managed, public json_interface<sticker> {
 	virtual std::string build_json(bool with_id = true) const;
 
 	/**
-	 * @brief Get the sticker url
+	 * @brief Get the sticker url.
 	 *
-	 * @param accept_lottie Whether to allow that [lottie](https://airbnb.io/lottie/#/) (json format) can be returned or not
-	 * @return std::string The sticker url or an empty string when its a lottie and accept_lottie is false
+	 * @return std::string The sticker url or an empty string, if the id is empty
 	 */
-	std::string get_url(bool accept_lottie = true) const;
+	std::string get_url() const;
 
 	/**
 	 * @brief Set the filename
@@ -979,6 +979,8 @@ enum message_flags : uint16_t {
 	m_loading = 1 << 7,
 	/// this message failed to mention some roles and add their members to the thread
 	m_thread_mention_failed = 1 << 8,
+	/// this message will not trigger push and desktop notifications
+	m_suppress_notifications = 1 << 12,
 };
 
 /**
@@ -1069,6 +1071,20 @@ enum message_type {
 	mt_context_menu_command 			= 23,
 	/// Auto moderation action
 	mt_auto_moderation_action			= 24,
+	/// Role subscription purchase
+	mt_role_subscription_purchase		= 25,
+	/// Interaction premium upsell
+	mt_interaction_premium_upsell		= 26,
+	/// Stage start
+	mt_stage_start						= 27,
+	/// Stage end
+	mt_stage_end						= 28,
+	/// Stage speaker
+	mt_stage_speaker					= 29,
+	/// Stage topic
+	mt_stage_topic						= 31,
+	/// Guild application premium subscription
+	mt_application_premium_subscription	= 32,
 };
 
 /**
@@ -1150,7 +1166,7 @@ struct DPP_EXPORT message : public managed {
 	std::vector<channel> mention_channels;
 	/** any attached files */
 	std::vector<attachment> attachments;
-	/** zero or more dpp::embed objects */
+	/** Up to 10 dpp::embed objects */
 	std::vector<embed> embeds;
 	/** Optional: reactions to the message */
 	std::vector<reaction> reactions;
@@ -1387,6 +1403,13 @@ struct DPP_EXPORT message : public managed {
 	 * @return true if this message failed to mention some roles and add their members to the thread
 	 */
 	bool is_thread_mention_failed() const;
+
+	/**
+	 * @brief True if the message will not trigger push and desktop notifications
+	 *
+	 * @return True if notifications suppressed
+	 */
+	bool suppress_notifications() const;
 
 	/**
 	 * @brief Add a component (button) to message
