@@ -26,11 +26,12 @@ int main()
         Yoka::Handlers::Command::InitHandlers(&yoka, event);
 
         // command log
+        // debug purposes only
         yoka.log(dpp::loglevel::ll_info, "user '" + user.username + "' executed command '" + commandName + "' on guild '" + guild.name + "' in channel '" + channel.name + "'");
     });
 
     yoka.on_message_reaction_add([&yoka](const dpp::message_reaction_add_t& event) {
-        
+        // reaction roles
     });
 
     yoka.on_button_click([&yoka](const dpp::button_click_t& event) {
